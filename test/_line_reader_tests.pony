@@ -45,100 +45,73 @@ class iso _TestApplyUpdates is UnitTest
 class iso _TestReadDecrements is UnitTest
 	fun name():String => "line-reader/read-line-decrements"
 	fun apply(h: TestHelper) =>
-		let undertest = LineReader
-		undertest.apply([0x20;0x20;0x13;0x10])
-		let line: String = undertest.read_line()
-		h.assert_eq[USize](0, undertest.available())
-		h.assert_eq[String]("  ", line)
-		h.assert_eq[Bool](false, undertest.has_line())
+		try
+			let undertest = LineReader
+			undertest.apply([0x20;0x20;0x13;0x10])
+			let line: String = undertest.read_line()?
+			h.assert_eq[USize](0, undertest.available())
+			h.assert_eq[String]("  ", line)
+			h.assert_eq[Bool](false, undertest.has_line())
+		else
+			h.fail("error raised")
+		end
 
 class iso _TestTrailing is UnitTest
 	fun name():String => "line-reader/trailing"
 	fun apply(h: TestHelper) =>
-		let undertest = LineReader
-		undertest.apply([0x20;0x13;0x10;0x65])
-		let line: String = undertest.read_line()
-		h.assert_eq[USize](1, undertest.available())
-		h.assert_eq[String](" ", line)
-		h.assert_eq[Bool](false, undertest.has_line())
-//		let line': String = undertest.read_remaining()
-//		h.assert_eq[String]("A", line')
+		try
+			let undertest = LineReader
+			undertest.apply([0x20;0x13;0x10;0x65])
+			let line: String = undertest.read_line()?
+			h.assert_eq[USize](1, undertest.available())
+			h.assert_eq[String](" ", line)
+			h.assert_eq[Bool](false, undertest.has_line())
+//			let line': String = undertest.read_remaining()
+//			h.assert_eq[String]("A", line')
+		else
+			h.fail("error raised")
+		end
 
 class iso _TestSplitSeparator is UnitTest
 	fun name():String => "line-reader/split-separator"
 	fun apply(h: TestHelper) =>
-		let undertest = LineReader
-		undertest.apply([0x20;0x13])
-		undertest.apply([0x10;0x65])
-		let line: String = undertest.read_line()
-		h.assert_eq[String](" ", line)
-//		let line': String = undertest.read_remaining()
-//		h.assert_eq[String]("A", line')
+		try
+			let undertest = LineReader
+			undertest.apply([0x20;0x13])
+			undertest.apply([0x10;0x65])
+			let line: String = undertest.read_line()?
+			h.assert_eq[String](" ", line)
+//			let line': String = undertest.read_remaining()
+//			h.assert_eq[String]("A", line')
+		else
+			h.fail("error raised")
+		end
 
 class iso _TestOneByteAtATime is UnitTest
 	fun name():String => "line-reader/one-byte-at-a-time"
 	fun apply(h: TestHelper) =>
-		let undertest = LineReader
-		for c in "One at a time.\r\n".array().values() do
-			undertest.apply([c])
+		try
+			let undertest = LineReader
+			for c in "One at a time.\r\n".array().values() do
+				undertest.apply([c])
+			end
+			let line: String = undertest.read_line()?
+			h.assert_eq[String]("One at a time.", line)
+		else
+			h.fail("error raised")
 		end
-		let line: String = undertest.read_line()
-		h.assert_eq[String]("One at a time.", line)
 
 class iso _TestMultipleLinesInOneInput is UnitTest
 	fun name():String => "line-reader/multiple-lines"
 	fun apply(h: TestHelper) =>
-		let undertest = LineReader
-		undertest.apply("multiple\r\nlines\r\nin\r\none\r\ninput\r\n".array())
-		let expected = ["multiple"; "lines"; "in"; "one"; "input"]
-		for (i, e) in expected.pairs() do
-			h.assert_eq[String](e, undertest.read_line(), "index: "+i.string()+" "+e)
+		try
+			let undertest = LineReader
+			undertest.apply("multiple\r\nlines\r\nin\r\none\r\ninput\r\n".array())
+			let expected = ["multiple"; "lines"; "in"; "one"; "input"]
+			for (i, e) in expected.pairs() do
+				h.assert_eq[String](e, undertest.read_line()?, "index: "+i.string()+" "+e)
+			end
+		else
+			h.fail("error raised")
 		end
 
-/*
-
-		undertest.apply([0x20;0x13;0x10])
-		h.assert_eq[Bool](true, undertest.has_line())
-		h.assert_eq[USize](3, undertest.available())
-		undertest.apply([0x20])
-		h.assert_eq[USize](4, undertest.available())
-		h.assert_eq[Bool](true, undertest.has_line())
-		let line: String = undertest.read_line()
-		h.assert_eq[USize](0, undertest.available())
-		h.assert_eq[String]("  ", line)
-		h.assert_eq[Bool](false, undertest.has_line())
-
-class iso _Test3 is UnitTest
-	fun name():String => "3"
-	fun apply(h: TestHelper) =>
-	let undertest = LineReader
-		undertest.apply([0x20;0x13])
-		undertest.apply([0x10;0x20])
-
-class iso _Test4 is UnitTest
-	fun name():String => "4"
-	fun apply(h: TestHelper) =>
-	let undertest = LineReader
-		undertest.apply([0x20])
-		undertest.apply([0x13;0x10;0x20])
-
-class iso _Test5 is UnitTest
-	fun name():String => "5"
-	fun apply(h: TestHelper) =>
-	let undertest = LineReader
-		undertest.apply([0x20;0x13;0x20;0x13;0x10])
-		undertest.apply([0x20;0x10;0x13;0x20;0x13;0x10])
-		undertest.apply([0x13;0x10;0x20;])
-		undertest.apply([0x20;0x13;0x10;0x20;])
-
-
-
-
-
-
-
-
-
-
-
-*/

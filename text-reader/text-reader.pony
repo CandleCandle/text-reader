@@ -3,36 +3,55 @@ use "collections"
 
 
 
-class _BufferElement
+class BufferElement
+	// the role of this class is to contain the array buffers and know where
+	// the separators are and which bytes have been consumed.
 	let _buffer: Array[U8] val
 	let _offsets: Array[USize] val
+	var _position: USize = 0 // current position
 	var _current: USize = 0 // index into _offsets
+	let _separator_length: USize
 
-	new create(buffer: Array[U8] val) =>
+	new create(buffer: Array[U8] val, separator_length: USize, offsets: Array[USize] val) =>
 		_buffer = buffer
-		_offsets = recover val Array[USize]() end
+		_offsets = offsets
+		_separator_length = separator_length
 
-	fun append_to(str: String iso): (String iso, Bool) =>
+	fun ref append_to(str: String iso): String iso^ =>
 		"""
 		returns the string that was appended to; true if we read to an end-of-line
 		"""
-		(consume str, false)
-	// is_consumed(): Bool
+		try
+			str.append(_buffer, _position, _offsets(_current)?-_position)
+			_position = _offsets(_current)? + _separator_length
+			_current = _current + 1
+		end
+		str
+
+	fun continuation(): Bool =>
+		false
+		// return true if we appended our remaining buffer without 
+		// reaching a `separator`
 
 	fun remaining(): USize =>
 		"""
 		number of bytes remaining to be read in the _buffer.
 		"""
-		0
+		if _buffer.size() > _position then
+			(_buffer.size() - _position)
+		else
+			0
+		end
 
 class LineReader
-	let _buffer: List[_BufferElement] = List[_BufferElement]()
+	// The role of this class is to contain the external interface
+	let _buffer: List[BufferElement] = List[BufferElement]()
 	var _available: USize = 0
 	var _lines: USize = 0
 	let _separator: Array[U8] val = [0x13;0x10]
 
 	fun ref apply(arr: Array[U8] val) =>
-		_buffer.push(_BufferElement.create(arr))
+		_buffer.push(BufferElement.create(arr, _separator.size(), recover val Array[USize](0) end))
 		_available = _available + arr.size()
 		// 
 		_lines = _lines + ArraySearch.count_needles(arr, _separator)
@@ -41,19 +60,41 @@ class LineReader
 
 	fun box has_line(): Bool => _lines > 0
 
-	fun box line_count(): USize => _lines
+	fun box line_count(): USize =>
+		"""
+		returns the number of complete lines that can be read from the buffer.
+		"""
+		_lines
 
-	fun ref read_line(): String =>
-//		try
-//			var str: String iso = recover iso String(42) end // TODO pre-calculate the size.
-//			var current = _buffer.head()?.apply()?
-//			(str, let next: Bool) = current.append_to(str)
-//			consume str
-//		else
-			""
-//		end
+	fun ref read_line(): String ? =>
+		// I don't like that this function is partial, however,
+		// the patterns of:
+		// foo = bar(consume foo)
+		// and
+		// foo' = bar( consume foo); foo = consume foo'
+		// are unhappy when they are in a try block or a loop.
+
+		// peak at HEAD
+		// copy from HEAD's buffer to the result
+		// if HEAD.remaining == 0 then shift it off the front
+		// did the copy produce a full line?
+		//   return the result.
+		// otherwise
+		//   goto start
+
+		var str: String iso = recover iso String() end
+		var head = _buffer.head()?()?
+		str = head.append_to(consume str)
+		while head.continuation() do
+			_buffer.shift()?
+			head = _buffer.head()?()?
+			str = head.append_to(consume str)
+		end
+		str
 
 primitive ArraySearch
+	// the role of this primitive is to encapsulate the array searching functions in a
+	// easily testable way.
 
 	fun index_of(haystack: Array[U8] val, needle: Array[U8] val, haystack_offset: USize = 0, needle_offset: USize = 0): USize =>
 		"""

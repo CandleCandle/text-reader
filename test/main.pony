@@ -11,5 +11,6 @@ actor Main is TestList
 	fun tag tests(test: PonyTest) =>
 		_LineReaderTests.make().tests(test)
 		_ArraySearchTests.make().tests(test)
+		_BufferElementTests.make().tests(test)
 
 

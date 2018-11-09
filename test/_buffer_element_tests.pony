@@ -1,0 +1,63 @@
+use "ponytest"
+use "../text-reader"
+
+actor _BufferElementTests is TestList
+	new create(env: Env) =>
+		PonyTest(env, this)
+
+	new make() =>
+		None
+
+	fun tag tests(test: PonyTest) =>
+		test(_TestFullyConsumed)
+		test(_TestPartiallyConsumed)
+		test(_TestRepeatConsume)
+		test(_TestPartialContent)
+
+class iso _TestFullyConsumed is UnitTest
+	fun name():String => "buffer-element/fully-consumed"
+	fun apply(h: TestHelper) =>
+		let undertest = BufferElement("fully-consumed\r\n".array(), 2, [as USize: 14])
+		h.assert_eq[USize](16, undertest.remaining())
+		var str: String iso = recover iso String() end
+		var str': String iso = undertest.append_to(consume str)
+		h.assert_eq[String]("fully-consumed", consume str')
+		h.assert_eq[USize](0, undertest.remaining())
+
+class iso _TestPartiallyConsumed is UnitTest
+	fun name():String => "buffer-element/partially-consumed"
+	fun apply(h: TestHelper) =>
+		let undertest = BufferElement("partially\r\nconsumed\r\n".array(), 2, [as USize: 9; 19])
+		h.assert_eq[USize](21, undertest.remaining())
+		var str: String iso = recover iso String() end
+		var str' = undertest.append_to(consume str)
+		h.assert_eq[String]("partially", consume str')
+		h.assert_eq[USize](10, undertest.remaining())
+
+class iso _TestRepeatConsume is UnitTest
+	fun name():String => "buffer-element/repeat-consume"
+	fun apply(h: TestHelper) =>
+		let undertest = BufferElement("partially\r\nconsumed\r\n".array(), 2, [as USize: 9; 19])
+
+		h.assert_eq[USize](21, undertest.remaining())
+		var str: String iso = recover iso String() end
+		var str' = undertest.append_to(consume str)
+		h.assert_eq[String]("partially", consume str')
+
+		h.assert_eq[USize](10, undertest.remaining())
+		var str'': String iso = recover iso String() end
+		var str''' = undertest.append_to(consume str'')
+		h.assert_eq[String]("consumed", consume str''')
+		h.assert_eq[USize](0, undertest.remaining())
+
+class iso _TestPartialContent is UnitTest
+	fun name():String => "buffer-element/partial-content"
+	fun apply(h: TestHelper) =>
+		let undertest = BufferElement("partial conte...".array(), 2, [as USize: ])
+		h.assert_eq[USize](14, undertest.remaining())
+		var str: String iso = recover iso String() end
+		var str': String iso = undertest.append_to(consume str)
+		h.assert_eq[String]("partial conte...", consume str')
+		h.assert_eq[USize](0, undertest.remaining())
+		h.assert_true(undertest.continuation())
+
