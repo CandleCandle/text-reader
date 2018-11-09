@@ -66,7 +66,10 @@ class LineReader
 		"""
 		_lines
 
-	fun ref read_line(): String ? =>
+	fun ref read_line(): String =>
+		try _read_line()? else "" end
+
+	fun ref _read_line(): String ? =>
 		// I don't like that this function is partial, however,
 		// the patterns of:
 		// foo = bar(consume foo)
