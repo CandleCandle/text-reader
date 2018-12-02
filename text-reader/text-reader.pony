@@ -86,17 +86,21 @@ class BufferElement
 		separators = separators'
 
 	fun box consumed(): Bool =>
-		separator_idx >= separators.size()
+		position >= buffer.size()
 
 	fun box copy_to(): USize =>
-		try separators(separator_idx)? else 0 end
+		if separator_idx >= separators.size() then
+			buffer.size()
+		else
+			try separators(separator_idx)? else 0 end
+		end
 
 class LineReader
 	// The role of this class is to contain the external interface
 	let _buffer: List[BufferElement] = List[BufferElement]()
 	var _available: USize = 0
 	var _lines: USize = 0
-	let _separator: Array[U8] val = [0x13;0x10]
+	let _separator: Array[U8] val = [0xd;0xa]
 
 	fun ref apply(arr: Array[U8] val) =>
 		let sep = ArraySearch.indexes_of(arr, _separator)
@@ -104,6 +108,10 @@ class LineReader
 		_available = _available + arr.size()
 		//
 		_lines = _lines + sep.size()
+		for s in sep.values() do
+			@printf[None]("separators: %d\n".cstring(), s)
+		end
+		@printf[None]("create: lines: %d, available: %d, buf: %s\n".cstring(), _lines, _available, String.from_array(arr).cstring())
 
 	fun box available(): USize => _available
 
@@ -117,7 +125,7 @@ class LineReader
 
 	fun ref read_line(): String =>
 		try
-			let s: String iso = recover iso String.create() end
+			let s: String iso = recover iso String.create() end // TODO pre-calculate the expected size of the string.
 			var current: BufferElement = _buffer.head()?()?
 			@printf[None]("lines: %d, available: %d\n".cstring(), _lines, _available)
 			while not current.consumed() do
@@ -126,6 +134,7 @@ class LineReader
 				s.append(current.buffer, current.position, copy_to)
 				@printf[None]("s: --%s--\n".cstring(), s.cstring())
 				current.separator_idx = current.separator_idx + 1
+				current.position = current.copy_to() + _separator.size()
 				if current.consumed() then
 					@printf[None]("consumed...\n".cstring())
 					_buffer.shift()?
@@ -135,12 +144,15 @@ class LineReader
 				end
 			end
 			_lines = _lines - 1
-			_available = (_available - s.size()) - 2
+			_available = (_available - s.size()) - _separator.size()
 			@printf[None]("lines: %d, available: %d\n".cstring(), _lines, _available)
 			s
 		else
 			""
 		end
+
+	fun ref remaining(): Array[ByteSeq] val =>
+		[as ByteSeq: ]
 
 primitive ArraySearch
 	// the role of this primitive is to encapsulate the array searching functions in a

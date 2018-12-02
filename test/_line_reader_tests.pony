@@ -25,6 +25,9 @@ actor _LineReaderTests is TestList
 		test(_TestTrailing)
 		test(_TestSplitSeparator)
 		test(_TestOneByteAtATime)
+		test(_TestMultipleInputsOneLine)
+		test(_TestRemainingBytes)
+		test(_TestPartialRemainingBytes)
 
 class iso _TestInitialState is UnitTest
 	fun name():String => "line-reader/initial"
@@ -94,4 +97,42 @@ class iso _TestMultipleLinesInOneInput is UnitTest
 		for (i, e) in expected.pairs() do
 			h.assert_eq[String](e, undertest.read_line(), "index: "+i.string()+" "+e)
 		end
+
+class iso _TestMultipleInputsOneLine is UnitTest
+	fun name():String => "line-reader/multiple-inputs"
+	fun apply(h: TestHelper) =>
+		let undertest = LineReader
+		undertest.apply("multiple ".array())
+		undertest.apply("inputs ".array())
+		undertest.apply("on ".array())
+		undertest.apply("one ".array())
+		undertest.apply("line\r\n".array())
+		let line: String = undertest.read_line()
+		h.assert_eq[String]("multiple inputs on one line", line)
+
+class iso _TestRemainingBytes is UnitTest
+	fun name():String => "line-reader/remaining-bytes"
+	fun apply(h: TestHelper) =>
+		let undertest = LineReader
+		undertest.apply("lines\r\n".array())
+		undertest.apply("with trailing bytes".array())
+		h.assert_eq[String]("lines", undertest.read_line())
+		let remaining: Array[ByteSeq] val = undertest.remaining()
+		h.assert_eq[USize](1, remaining.size())
+		try
+			h.assert_array_eq[U8]("with trailing bytes".array(), remaining(0)?)
+		end
+
+class iso _TestPartialRemainingBytes is UnitTest
+	fun name():String => "line-reader/partial-remaining-bytes"
+	fun apply(h: TestHelper) =>
+		let undertest = LineReader
+		undertest.apply("lines\r\nwith trailing bytes".array())
+		h.assert_eq[String]("lines", undertest.read_line())
+		let remaining: Array[ByteSeq] val = undertest.remaining()
+		h.assert_eq[USize](1, remaining.size())
+		try
+			h.assert_array_eq[U8]("with trailing bytes".array(), remaining(0)?)
+		end
+
 
