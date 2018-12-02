@@ -16,6 +16,9 @@ actor _ArraySearchTests is TestList
 		test(_TestFive)
 		test(_TestSix)
 		test(_TestSeven)
+		test(_TestEight)
+		test(_TestNine)
+		test(_TestTen)
 
 class iso _TestOne is UnitTest
 	fun name():String => "array-search/index/basic"
@@ -86,4 +89,31 @@ class iso _TestSix is UnitTest
 				where needle_offset = 4
 			)
 		h.assert_eq[USize](0, result)
+
+class iso _TestEight is UnitTest
+	fun name():String => "array-search/indexes/single"
+	fun apply(h: TestHelper) =>
+		let result = ArraySearch.indexes_of(
+				"search in here".array(),
+				"a".array()
+			)
+		h.assert_array_eq[USize]([as USize: 2], result)
+
+class iso _TestNine is UnitTest
+	fun name():String => "array-search/indexes/multiple"
+	fun apply(h: TestHelper) =>
+		let result = ArraySearch.indexes_of(
+				"search in here".array(),
+				"e".array()
+			)
+		h.assert_array_eq[USize]([as USize: 1; 11; 13], result)
+
+class iso _TestTen is UnitTest
+	fun name():String => "array-search/indexes/long"
+	fun apply(h: TestHelper) =>
+		let result = ArraySearch.indexes_of(
+				"search in here".array(),
+				"ea".array()
+			)
+		h.assert_array_eq[USize]([as USize: 1], result)
 
