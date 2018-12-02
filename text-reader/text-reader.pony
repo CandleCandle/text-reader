@@ -1,8 +1,10 @@
 use "collections"
+use "format"
 
 /*
 
-HTTP 1.0 client:
+example usage:
+HTTP 1.0/1? client:
 
 var _state: (ResponseLine | Headers | Body)
 let _reader: LineReader iso
@@ -38,36 +40,54 @@ fun ref received(..., data Array[U8] iso, ...) =>
 	end
 
 
-000000000011111111112222222222333333333344444444445555555555
-012345678901234567890123456789012345678901234567890123456789
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff
+74 68 69 73 0D 0A 20 69 73 20 61 20 67 6F 6F 64
+<-------------- first ------------------> <----
 
-0000000000000000111111111111111122222222222222223333333333333333
-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-this.. is a good idea..really...
+11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11
+00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff
+20 69 64 65 61 0D 0A 72 65 61 6C 6C 79 2E 0D 0A
+-- second ------> <------- third ------------->
 
-00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11
-00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff
-74 68 69 73 0D 0A 20 69 73 20 61 20 67 6F 6F 64 20 69 64 65 61 0D 0A 72 65 61 6C 6C 79 2E 0D 0A
-<-------------- first ------------------> <---- second ---------> <------- third ------------->
+22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22
+00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff
+2E 0D 0A 2E 0D 0A 2E 0D 0A 2E 0D 0A 2E 2E 0D 0A
+<----------------- fourth -------------------->
 
-arr = first
-available = 13
-separators = [4]
-lines = 1
-separator_idx = 0
-position = 0
+first:   size = 0x0d; position = 0x00; separator_idx = 0; separators = [0x04]
+second:  size = 0x08; position = 0x00; separator_idx = 0; separators = [0x07]
+third:   size = 0x0a; position = 0x01; separator_idx = 0; separators = [0x08]
+fourth:  size = 0x10; position = 0x00; separator_idx = 0; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
 
-readline ->
-first.copy_to(out, 0, position, separators[separator_idx])
-position = separators[separator_idx]
-if arr(position) == 0D: position += 1
-if arr(position) == 0A: position += 1
-separator_idx += 1
-lines -= 1
+read_line => 74 68 69 73
+first:   size = 0x0d; position = 0x06; separator_idx = 1; separators = [0x04]
 
+read_line => 20 69 73 20 61 20 67 6F 6F 64 20 69 64 65 61
+first:   size = 0x0d; position = 0x0e; separator_idx = 1; separators = [0x04]
+(shift)
+second:  size = 0x08; position = 0x06; separator_idx = 1; separators = [0x07]
+(shift)
 
+read_line => 72 65 61 6C 6C 79 2E
+third:   size = 0x0a; position = 0x0b; separator_idx = 1; separators = [0x08]
+(shift)
 
+read_line => 2E
+fourth:  size = 0x10; position = 0x03; separator_idx = 1; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
 
+read_line => 2E
+fourth:  size = 0x10; position = 0x06; separator_idx = 2; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
+
+read_line => 2E
+fourth:  size = 0x10; position = 0x09; separator_idx = 3; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
+
+read_line => 2E
+fourth:  size = 0x10; position = 0x0c; separator_idx = 4; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
+
+read_line => 2E 2E
+fourth:  size = 0x10; position = 0x10; separator_idx = 5; separators = [0x01; 0x04; 0x07; 0x0a; 0x0e]
+(shift)
 
 */
 
@@ -95,6 +115,24 @@ class BufferElement
 			try separators(separator_idx)? else 0 end
 		end
 
+	fun box string(): String iso^ =>
+		let result: String iso = recover String end
+		result.append("size = ")
+		result.append(Format.int[USize](buffer.size() where width=10, fmt=FormatHex, align=AlignRight))
+		result.append(", position = ")
+		result.append(Format.int[USize](position where width=10, fmt=FormatHex, align=AlignRight))
+		result.append(", separator_idx = ")
+		result.append(Format.int[USize](separator_idx where width=10, fmt=FormatHex, align=AlignRight))
+		result.append(", separators = [")
+		var first = true
+		for sep in separators.values() do
+			if not first then result.append("; ") end
+			result.append(Format.int[USize](sep where fmt=FormatHex))
+			first = false
+		end
+		result.append("]")
+		result
+
 class LineReader
 	// The role of this class is to contain the external interface
 	let _buffer: List[BufferElement] = List[BufferElement]()
@@ -111,7 +149,15 @@ class LineReader
 		for s in sep.values() do
 			@printf[None]("separators: %d\n".cstring(), s)
 		end
-		@printf[None]("create: lines: %d, available: %d, buf: %s\n".cstring(), _lines, _available, String.from_array(arr).cstring())
+		@printf[None]("apply: lines: %d, available: %d, buf: %s\n".cstring(), _lines, _available, String.from_array(arr).cstring())
+		var counter: USize = 0
+		for b in _buffer.values() do
+			@printf[None]("    %4d: %s\n".cstring(),
+				counter, b.string().cstring()
+			)
+			counter = counter + 1
+		end
+
 
 	fun box available(): USize => _available
 
@@ -123,6 +169,20 @@ class LineReader
 		"""
 		_lines
 
+	/*
+
+result = empty string
+current = buffers.head()
+while (current is not fully consumed) and (separator has not been reached):
+	copy from (current position to (end of buffer OR next separator)) to the output string
+	if not finished
+		buffers.shift()
+	end
+end
+housekeeping of counters (line count & available bytes)
+return string
+
+	*/
 	fun ref read_line(): String =>
 		try
 			let s: String iso = recover iso String.create() end // TODO pre-calculate the expected size of the string.
@@ -152,7 +212,17 @@ class LineReader
 		end
 
 	fun ref remaining(): Array[ByteSeq] val =>
-		[as ByteSeq: ]
+		let size = _buffer.size()
+		let result: Array[ByteSeq] iso = recover iso Array[ByteSeq](size) end
+		for b in _buffer.values() do
+			if b.position != 0 then
+				// TODO element should be copied when it has been partially consumed.
+				result.push(b.buffer)
+			else
+				result.push(b.buffer)
+			end
+		end
+		result
 
 primitive ArraySearch
 	// the role of this primitive is to encapsulate the array searching functions in a
