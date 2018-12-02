@@ -40,7 +40,7 @@ class iso _TestApplyUpdates is UnitTest
 	fun name():String => "line-reader/apply-updates"
 	fun apply(h: TestHelper) =>
 		let undertest = LineReader
-		undertest.apply([0x20;0x20;0x13;0x10])
+		undertest.apply([0x20;0x20;0xd;0xa])
 		h.assert_eq[USize](4, undertest.available())
 		h.assert_eq[USize](1, undertest.line_count())
 		h.assert_eq[Bool](true, undertest.has_line())
@@ -49,7 +49,7 @@ class iso _TestReadDecrements is UnitTest
 	fun name():String => "line-reader/read-line-decrements"
 	fun apply(h: TestHelper) =>
 		let undertest = LineReader
-		undertest.apply([0x20;0x20;0x13;0x10])
+		undertest.apply([0x20;0x20;0xd;0xa])
 		let line: String = undertest.read_line()
 		h.assert_eq[USize](0, undertest.available())
 		h.assert_eq[String]("  ", line)
@@ -59,7 +59,7 @@ class iso _TestTrailing is UnitTest
 	fun name():String => "line-reader/trailing"
 	fun apply(h: TestHelper) =>
 		let undertest = LineReader
-		undertest.apply([0x20;0x13;0x10;0x65])
+		undertest.apply([0x20;0xd;0xa;0x65])
 		let line: String = undertest.read_line()
 		h.assert_eq[USize](1, undertest.available())
 		h.assert_eq[String](" ", line)
@@ -71,8 +71,8 @@ class iso _TestSplitSeparator is UnitTest
 	fun name():String => "line-reader/split-separator"
 	fun apply(h: TestHelper) =>
 		let undertest = LineReader
-		undertest.apply([0x20;0x13])
-		undertest.apply([0x10;0x65])
+		undertest.apply([0x20;0xd])
+		undertest.apply([0xa;0x65])
 		let line: String = undertest.read_line()
 		h.assert_eq[String](" ", line)
 //		let line': String = undertest.read_remaining()
