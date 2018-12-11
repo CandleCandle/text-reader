@@ -19,10 +19,10 @@ actor _ArraySearchTests is TestList
 		test(_TestEight)
 		test(_TestNine)
 		test(_TestTen)
-		test(_TestFoundReversePrefix1)
-		test(_TestFoundReversePrefix2)
-		test(_TestFoundReverseComplete)
-		test(_TestNotFoundReverse)
+		test(_TestFoundTrailingPrefix1)
+		test(_TestFoundTrailingPrefix2)
+		test(_TestFoundTrailingComplete)
+		test(_TestNotFoundTrailing)
 		test(_TestFoundSuffix1)
 		test(_TestFoundSuffix2)
 		test(_TestFoundCompleteSuffix)
@@ -125,40 +125,40 @@ class iso _TestTen is UnitTest
 			)
 		h.assert_array_eq[USize]([as USize: 1], result)
 
-class iso _TestFoundReversePrefix1 is UnitTest
+class iso _TestFoundTrailingPrefix1 is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/1"
 	fun apply(h: TestHelper) =>
-		(let location, let length) = ArraySearch.reverse_prefix(
+		(let location, let length) = ArraySearch.trailing_prefix(
 				"search in here".array(),
 				"rear".array()
 				)
 		h.assert_eq[USize](12, location)
 		h.assert_eq[USize](2, length)
 
-class iso _TestFoundReversePrefix2 is UnitTest
+class iso _TestFoundTrailingPrefix2 is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/2"
 	fun apply(h: TestHelper) =>
-		(let location, let length) = ArraySearch.reverse_prefix(
+		(let location, let length) = ArraySearch.trailing_prefix(
 				"a".array(),
 				"at".array()
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](1, length)
 
-class iso _TestFoundReverseComplete is UnitTest
+class iso _TestFoundTrailingComplete is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/complete-match"
 	fun apply(h: TestHelper) =>
-		(let location, let length) = ArraySearch.reverse_prefix(
+		(let location, let length) = ArraySearch.trailing_prefix(
 				"search in here".array(),
 				"here".array()
 				)
 		h.assert_eq[USize](10, location)
 		h.assert_eq[USize](4, length)
 
-class iso _TestNotFoundReverse is UnitTest
+class iso _TestNotFoundTrailing is UnitTest
 	fun name():String => "array-search/trailing/prefix/not-found"
 	fun apply(h: TestHelper) =>
-		(let location, let length) = ArraySearch.reverse_prefix(
+		(let location, let length) = ArraySearch.trailing_prefix(
 				"search in here".array(),
 				"no".array()
 				)

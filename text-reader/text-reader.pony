@@ -201,7 +201,7 @@ class LineReader
 
 		var sep = ArraySearch.indexes_of(arr, _separator)
 
-		(let trailing_position, let trailing_length) = ArraySearch.reverse_prefix(arr, _separator)
+		(let trailing_position, let trailing_length) = ArraySearch.trailing_prefix(arr, _separator)
 		if (trailing_length > 0) and (trailing_length < _separator.size()) then
 			sep = recover val
 				let sep' = sep.clone()
@@ -377,8 +377,7 @@ primitive ArraySearch
 		end
 		(0, 0)
 
-	// TODO rename to trailing_prefix
-	fun reverse_prefix(haystack: Array[U8] val, needle: Array[U8] val): (USize, USize) =>
+	fun trailing_prefix(haystack: Array[U8] val, needle: Array[U8] val): (USize, USize) =>
 		"""
 		returned tuple entries:
 			1: position in the haystack for starting the needle prefix
