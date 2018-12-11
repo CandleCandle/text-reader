@@ -194,7 +194,6 @@ class LineReader
 	var _uid: USize = 0
 
 	fun ref apply(arr: Array[U8] val) =>
-		// TODO partial separators
 		// if there's the beginning of a separator at the end of this `arr` then add it as an additional separator
 		// count the number of bytes of the separator that are in the previous `arr`, look for the remaining
 		// parts of the separator at the beginning of this `arr`, if found, increment the `position` to point to
@@ -240,7 +239,6 @@ class LineReader
 			)
 			counter = counter + 1
 		end
-		
 
 	fun box available(): USize => _available
 
@@ -368,12 +366,15 @@ primitive ArraySearch
 
 		note: probably does not need to return a tuple as given the size of the needle, one of the entries can be calculated from the other.
 		"""
-		if haystack.size() < needle.size() then return (0, 0) end
-//		var haystack_idx = 0
-//		for (needle_idx, needle_byte) in needle.pairs() do
-//			while 
-//			haystack_byte = 
-//		end
+		if (haystack.size() == 0) or (needle.size() == 0) then return (0, 0) end
+		for (needle_idx, unused) in needle.pairs() do
+			let suffix = recover val needle.slice(needle_idx, needle.size()) end
+			let ret = index_of(haystack, suffix)
+			@printf[None]("needle idx: %d, needle size: %d, ret: %d\n".cstring(), needle_idx, needle.size(), ret)
+			if ret == 0 then
+				return (needle_idx, suffix.size())
+			end
+		end
 		(0, 0)
 
 	// TODO rename to trailing_prefix
@@ -385,18 +386,17 @@ primitive ArraySearch
 
 		note: probably does not need to return a tuple as given the size of the needle and size of the haystack, one of the entries can be calculated from the other.
 		"""
-		if haystack.size() < needle.size() then return (0, 0) end
-		for (p, unused) in needle.pairs() do // checking for the needle starting at `position`
-			let position = (haystack.size() - needle.size()) + p
-			for (needle_idx, needle_byte) in needle.pairs() do
-				let nb = try needle(needle_idx)? else 0 end
-				let hb = try haystack(position + needle_idx)? else 0 end
-				if nb != hb then continue end
-				if ((position + needle_idx) + 1) >= haystack.size() then // +1: move beyond the size of the haystack, so we are in a 'found' state
-					return (position, needle_idx + 1) // +1: index => size conversion.
-				end 
-			end
+		if (haystack.size() == 0) or (needle.size() == 0) then return (0, 0) end
+		for (needle_idx, unused) in needle.pairs() do
+			let prefix = recover val needle.slice(0, needle.size()-needle_idx) end
+			let ret = index_of(haystack, prefix, haystack.size()-prefix.size())
+			var offset = haystack.size()-prefix.size()
+			@printf[None]("needle idx: %d, needle size: %d, ret: %d, prefix size: %d, haystack offset: %d\n".cstring(), needle_idx, needle.size(), ret, prefix.size(), offset)
+			if offset >= haystack.size() then continue end // offset can be "-ive" when haystack.size() < needle.size() (note that given the numbers are all unsigned, offset will be very large, hence the >=)
 
+			if ret == offset then
+				return (offset, prefix.size())
+			end
 		end
 		(0, 0)
 

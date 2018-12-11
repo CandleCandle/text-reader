@@ -19,10 +19,12 @@ actor _ArraySearchTests is TestList
 		test(_TestEight)
 		test(_TestNine)
 		test(_TestTen)
-		test(_TestFoundReversePrefix)
+		test(_TestFoundReversePrefix1)
+		test(_TestFoundReversePrefix2)
 		test(_TestFoundReverseComplete)
 		test(_TestNotFoundReverse)
-		test(_TestFoundSuffix)
+		test(_TestFoundSuffix1)
+		test(_TestFoundSuffix2)
 		test(_TestFoundCompleteSuffix)
 		test(_TestNotFoundSuffix)
 
@@ -123,8 +125,8 @@ class iso _TestTen is UnitTest
 			)
 		h.assert_array_eq[USize]([as USize: 1], result)
 
-class iso _TestFoundReversePrefix is UnitTest
-	fun name():String => "array-search/reverse/prefix/found"
+class iso _TestFoundReversePrefix1 is UnitTest
+	fun name():String => "array-search/trailing/prefix/found/1"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.reverse_prefix(
 				"search in here".array(),
@@ -133,8 +135,18 @@ class iso _TestFoundReversePrefix is UnitTest
 		h.assert_eq[USize](12, location)
 		h.assert_eq[USize](2, length)
 
+class iso _TestFoundReversePrefix2 is UnitTest
+	fun name():String => "array-search/trailing/prefix/found/2"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.reverse_prefix(
+				"a".array(),
+				"at".array()
+				)
+		h.assert_eq[USize](0, location)
+		h.assert_eq[USize](1, length)
+
 class iso _TestFoundReverseComplete is UnitTest
-	fun name():String => "array-search/reverse/prefix/found/complete-match"
+	fun name():String => "array-search/trailing/prefix/found/complete-match"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.reverse_prefix(
 				"search in here".array(),
@@ -144,7 +156,7 @@ class iso _TestFoundReverseComplete is UnitTest
 		h.assert_eq[USize](4, length)
 
 class iso _TestNotFoundReverse is UnitTest
-	fun name():String => "array-search/reverse/prefix/not-found"
+	fun name():String => "array-search/trailing/prefix/not-found"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.reverse_prefix(
 				"search in here".array(),
@@ -153,8 +165,8 @@ class iso _TestNotFoundReverse is UnitTest
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](0, length)
 
-class iso _TestFoundSuffix is UnitTest
-	fun name():String => "array-search/leading/suffix/partial-found"
+class iso _TestFoundSuffix1 is UnitTest
+	fun name():String => "array-search/leading/suffix/partial-found/1"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.leading_suffix(
 				"search in here".array(),
@@ -162,6 +174,16 @@ class iso _TestFoundSuffix is UnitTest
 				)
 		h.assert_eq[USize](3, location)
 		h.assert_eq[USize](2, length)
+
+class iso _TestFoundSuffix2 is UnitTest
+	fun name():String => "array-search/leading/suffix/partial-found/2"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.leading_suffix(
+				"e".array(),
+				"se".array()
+				)
+		h.assert_eq[USize](1, location)
+		h.assert_eq[USize](1, length)
 
 class iso _TestFoundCompleteSuffix is UnitTest
 	fun name():String => "array-search/leading/suffix/complete-found"
@@ -182,4 +204,5 @@ class iso _TestNotFoundSuffix is UnitTest
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](0, length)
+
 
