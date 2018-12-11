@@ -228,10 +228,6 @@ class LineReader
 
 
 	fun box _dump_buffer_status() =>
-//		for s in sep.values() do
-//			@printf[None]("separators: %d\n".cstring(), s)
-//		end
-//		@printf[None]("apply: lines: %d, available: %d, buf: %s\n".cstring(), _lines, _available, String.from_array(arr).cstring())
 		var counter: USize = 0
 		for b in _buffer.values() do
 			@printf[None]("    %4d: %s\n".cstring(),
@@ -250,20 +246,6 @@ class LineReader
 		"""
 		_lines
 
-	/*
-
-result = empty string
-current = buffers.head()
-while (current is not fully consumed) and (separator has not been reached):
-	copy from (current position to (end of buffer OR next separator)) to the output string
-	if not finished
-		buffers.shift()
-	end
-end
-housekeeping of counters (line count & available bytes)
-return string
-
-	*/
 	fun ref read_line(): String =>
 		@printf[None]("***************** start read_line *****************\n".cstring())
 		_dump_buffer_status()
@@ -304,12 +286,14 @@ return string
 		let result: Array[ByteSeq] iso = recover iso Array[ByteSeq](size) end
 		for b in _buffer.values() do
 			if b.position != 0 then
-				// TODO element should be copied when it has been partially consumed.
-				result.push(b.buffer)
+				result.push(recover val b.buffer.slice(b.position, b.buffer.size()) end)
 			else
 				result.push(b.buffer)
 			end
 		end
+		_buffer.clear()
+		_lines = 0
+		_available = 0
 		result
 
 primitive ArraySearch
