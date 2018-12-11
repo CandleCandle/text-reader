@@ -17,9 +17,11 @@ actor _BufferElementTests is TestList
 class iso _TestFullyConsumed is UnitTest
 	fun name(): String => "buffer-element/fully-consumed"
 	fun apply(h: TestHelper) =>
-		let undertest = BufferElement("fully-consumed\r\n".array(), [as USize: 14])
+		let undertest = BufferElement(0, "fully-consumed\r\n".array(), [as USize: 14])
 
-		h.assert_eq[USize](14, undertest.copy_to())
+		(let copy_to, let line) = undertest.copy_to()
+		h.assert_eq[USize](14, copy_to)
+		h.assert_eq[Bool](true, line)
 		h.assert_eq[Bool](false, undertest.consumed())
 
 //class iso _TestPartiallyConsumed is UnitTest

@@ -28,6 +28,7 @@ actor _LineReaderTests is TestList
 		test(_TestMultipleInputsOneLine)
 		test(_TestRemainingBytes)
 		test(_TestPartialRemainingBytes)
+		test(_TestCompleteCases)
 
 class iso _TestInitialState is UnitTest
 	fun name():String => "line-reader/initial"
@@ -117,7 +118,7 @@ class iso _TestRemainingBytes is UnitTest
 		undertest.apply("lines\r\n".array())
 		undertest.apply("with trailing bytes".array())
 		h.assert_eq[String]("lines", undertest.read_line())
-		let remaining: Array[ByteSeq] val = undertest.remaining()
+let remaining: Array[ByteSeq] val = undertest.remaining()
 		h.assert_eq[USize](1, remaining.size())
 		try
 			h.assert_array_eq[U8]("with trailing bytes".array(), remaining(0)?)
@@ -135,4 +136,23 @@ class iso _TestPartialRemainingBytes is UnitTest
 			h.assert_array_eq[U8]("with trailing bytes".array(), remaining(0)?)
 		end
 
+class iso _TestCompleteCases is UnitTest
+	fun name():String => "line-reader/complete-example"
+	fun apply(h: TestHelper) =>
+		let undertest = LineReader
+		undertest.apply("this is an\r\nexample ".array())
+		undertest.apply("that\r\n".array())
+		undertest.apply("should exibit ".array())
+		undertest.apply("multiple\r\nedge\r".array())
+		undertest.apply("\nca".array())
+		undertest.apply("s".array())
+		undertest.apply("e".array())
+		undertest.apply("".array())
+		undertest.apply("s".array())
+		undertest.apply("\r".array())
+		undertest.apply("\n".array())
 
+		let expected = ["this is an"; "example that"; "should exibit multiple"; "edge"; "cases"]
+		for (i, e) in expected.pairs() do
+			h.assert_eq[String](e, undertest.read_line(), "index: "+i.string()+" "+e)
+		end
