@@ -3,6 +3,17 @@ use "format"
 
 /*
 
+Read a byte stream line-by-line
+
+API objectives:
+ # reasonably usable
+ # checking functions (has_line(), etc)
+
+Implementation objectives:
+ # no partial functions on the primary path (when there is actually an error, it's fine.)
+ # as little memcopy as possible
+
+
 example usage:
 HTTP 1.0/1? client:
 
@@ -24,7 +35,7 @@ fun ref received(..., data Array[U8] iso, ...) =>
 		while _reader.has_line() then
 			let str = _reader.line()
 			if str == "" then
-				// When `data` contains the start of the body beyond the \r\n
+				// When `data` contains the start of the body beyond the \r\n\r\n
 				_payload.body.extend(_reader.remainder())
 				_state = Body
 			else
@@ -183,18 +194,37 @@ class LineReader
 	var _uid: USize = 0
 
 	fun ref apply(arr: Array[U8] val) =>
-		let sep = ArraySearch.indexes_of(arr, _separator)
-		_buffer.push(BufferElement.create(_uid, arr, sep))
-		_uid = _uid + 1
-		_available = _available + arr.size()
-
 		// TODO partial separators
 		// if there's the beginning of a separator at the end of this `arr` then add it as an additional separator
 		// count the number of bytes of the separator that are in the previous `arr`, look for the remaining
 		// parts of the separator at the beginning of this `arr`, if found, increment the `position` to point to
 		// beyond the separator. This may cause the `arr` to be consumed. Only push it into `_buffer` if not consumed.
 
-		_lines = _lines + sep.size()
+		var sep = ArraySearch.indexes_of(arr, _separator)
+
+		(let trailing_position, let trailing_length) = ArraySearch.reverse_prefix(arr, _separator)
+		if (trailing_length > 0) and (trailing_length < _separator.size()) then
+			sep = recover val
+				let sep' = sep.clone()
+				sep'.>push(trailing_position)
+			end
+		end
+
+		let seperator_count = sep.size()
+		let element = BufferElement.create(_uid, arr, sep)
+
+		(let leading_position, let leading_length) = ArraySearch.leading_suffix(arr, _separator)
+		if (leading_length > 0) and (leading_length < _separator.size()) then
+			element.position = leading_length
+		end
+
+		if not element.consumed() then
+			_buffer.push(element)
+			_uid = _uid + 1
+			_available = _available + arr.size()
+			_lines = _lines + seperator_count
+		end
+
 		_dump_buffer_status()
 
 
@@ -246,8 +276,9 @@ return string
 			while not current.consumed() do
 				(let copy_to, let line) = current.copy_to()
 
-				@printf[None]("copy_to: %d\n".cstring(), copy_to)
-				s.append(current.buffer, current.position, copy_to)
+				@printf[None]("%s\n".cstring(), current.string().cstring())
+				@printf[None]("copy_from: %d, copy_to: %d, length: %d\n".cstring(), current.position, copy_to, copy_to-current.position)
+				s.append(current.buffer, current.position, copy_to-current.position)
 				@printf[None]("s: --%s--\n".cstring(), s.cstring())
 				current.position = copy_to + _separator.size()
 				current.separator_idx = current.separator_idx + 1
@@ -329,7 +360,31 @@ primitive ArraySearch
 		end
 		result
 
+	fun leading_suffix(haystack: Array[U8] val, needle: Array[U8] val): (USize, USize) =>
+		"""
+		returned tuple entries:
+			1: position in the needle for starting the needle suffix
+			2: length of the needle suffix found
+
+		note: probably does not need to return a tuple as given the size of the needle, one of the entries can be calculated from the other.
+		"""
+		if haystack.size() < needle.size() then return (0, 0) end
+//		var haystack_idx = 0
+//		for (needle_idx, needle_byte) in needle.pairs() do
+//			while 
+//			haystack_byte = 
+//		end
+		(0, 0)
+
+	// TODO rename to trailing_prefix
 	fun reverse_prefix(haystack: Array[U8] val, needle: Array[U8] val): (USize, USize) =>
+		"""
+		returned tuple entries:
+			1: position in the haystack for starting the needle prefix
+			2: length of the needle found
+
+		note: probably does not need to return a tuple as given the size of the needle and size of the haystack, one of the entries can be calculated from the other.
+		"""
 		if haystack.size() < needle.size() then return (0, 0) end
 		for (p, unused) in needle.pairs() do // checking for the needle starting at `position`
 			let position = (haystack.size() - needle.size()) + p

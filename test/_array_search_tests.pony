@@ -22,6 +22,9 @@ actor _ArraySearchTests is TestList
 		test(_TestFoundReversePrefix)
 		test(_TestFoundReverseComplete)
 		test(_TestNotFoundReverse)
+		test(_TestFoundSuffix)
+		test(_TestFoundCompleteSuffix)
+		test(_TestNotFoundSuffix)
 
 class iso _TestOne is UnitTest
 	fun name():String => "array-search/index/basic"
@@ -144,6 +147,36 @@ class iso _TestNotFoundReverse is UnitTest
 	fun name():String => "array-search/reverse/prefix/not-found"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.reverse_prefix(
+				"search in here".array(),
+				"no".array()
+				)
+		h.assert_eq[USize](0, location)
+		h.assert_eq[USize](0, length)
+
+class iso _TestFoundSuffix is UnitTest
+	fun name():String => "array-search/leading/suffix/partial-found"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.leading_suffix(
+				"search in here".array(),
+				"noise".array()
+				)
+		h.assert_eq[USize](3, location)
+		h.assert_eq[USize](2, length)
+
+class iso _TestFoundCompleteSuffix is UnitTest
+	fun name():String => "array-search/leading/suffix/complete-found"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.leading_suffix(
+				"search in here".array(),
+				"sea".array()
+				)
+		h.assert_eq[USize](0, location)
+		h.assert_eq[USize](3, length)
+
+class iso _TestNotFoundSuffix is UnitTest
+	fun name():String => "array-search/leading/suffix/not-found"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.leading_suffix(
 				"search in here".array(),
 				"no".array()
 				)
