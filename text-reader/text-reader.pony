@@ -224,18 +224,6 @@ class LineReader
 			_lines = _lines + seperator_count
 		end
 
-		_dump_buffer_status()
-
-
-	fun box _dump_buffer_status() =>
-		var counter: USize = 0
-		for b in _buffer.values() do
-			@printf[None]("    %4d: %s\n".cstring(),
-				counter, b.string().cstring()
-			)
-			counter = counter + 1
-		end
-
 	fun box available(): USize => _available
 
 	fun box has_line(): Bool => _lines > 0
@@ -247,23 +235,16 @@ class LineReader
 		_lines
 
 	fun ref read_line(): String =>
-		@printf[None]("***************** start read_line *****************\n".cstring())
-		_dump_buffer_status()
 		try
 			let s: String iso = recover iso String.create() end // TODO pre-calculate the expected size of the string.
 			var current: BufferElement = _buffer.head()?()?
-			@printf[None]("lines: %d, available: %d\n".cstring(), _lines, _available)
 			while not current.consumed() do
 				(let copy_to, let line) = current.copy_to()
 
-				@printf[None]("%s\n".cstring(), current.string().cstring())
-				@printf[None]("copy_from: %d, copy_to: %d, length: %d\n".cstring(), current.position, copy_to, copy_to-current.position)
 				s.append(current.buffer, current.position, copy_to-current.position)
-				@printf[None]("s: --%s--\n".cstring(), s.cstring())
 				current.position = copy_to + _separator.size()
 				current.separator_idx = current.separator_idx + 1
 				if current.consumed() then
-					@printf[None]("consumed...\n".cstring())
 					_buffer.shift()?
 					if _buffer.size() > 0 then
 						current = _buffer.head()?()?
@@ -273,9 +254,6 @@ class LineReader
 			end
 			_lines = _lines - 1
 			_available = (_available - s.size()) - _separator.size()
-			@printf[None]("lines: %d, available: %d\n".cstring(), _lines, _available)
-			_dump_buffer_status()
-			@printf[None]("***************** end read_line *****************\n".cstring())
 			s
 		else
 			""
@@ -310,10 +288,8 @@ primitive ArraySearch
 		var needle_idx: USize = needle_offset
 		try
 			while haystack_idx < haystack.size() do
-				@printf[None]("h: %x n: %x hi: %d ni: %d\n".cstring(), haystack(haystack_idx)?, needle(needle_idx)?, haystack_idx, needle_idx)
 				if haystack(haystack_idx)? == needle(needle_idx)? then
 					if (needle_idx+1) >= needle.size() then
-						@printf[None]("found with hi: %d, ni: %d, ns: %d\n".cstring(), haystack_idx, needle_idx, needle.size())
 						return haystack_idx - (needle_idx - needle_offset)
 					end
 					needle_idx = needle_idx + 1
@@ -354,7 +330,6 @@ primitive ArraySearch
 		for (needle_idx, unused) in needle.pairs() do
 			let suffix = recover val needle.slice(needle_idx, needle.size()) end
 			let ret = index_of(haystack, suffix)
-			@printf[None]("needle idx: %d, needle size: %d, ret: %d\n".cstring(), needle_idx, needle.size(), ret)
 			if ret == 0 then
 				return (needle_idx, suffix.size())
 			end
@@ -374,7 +349,6 @@ primitive ArraySearch
 			let prefix = recover val needle.slice(0, needle.size()-needle_idx) end
 			let ret = index_of(haystack, prefix, haystack.size()-prefix.size())
 			var offset = haystack.size()-prefix.size()
-			@printf[None]("needle idx: %d, needle size: %d, ret: %d, prefix size: %d, haystack offset: %d\n".cstring(), needle_idx, needle.size(), ret, prefix.size(), offset)
 			if offset >= haystack.size() then continue end // offset can be "-ive" when haystack.size() < needle.size() (note that given the numbers are all unsigned, offset will be very large, hence the >=)
 
 			if ret == offset then
