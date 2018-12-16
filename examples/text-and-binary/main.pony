@@ -19,7 +19,9 @@ class SimpleMixtureListen is TCPListenNotify
 		None
 
 primitive _Text
+	fun string(): String val => "_Text"
 primitive _Binary
+	fun string(): String val => "_Binary"
 type State is ( _Text | _Binary )
 
 class SimpleMixtureNotify is TCPConnectionNotify
@@ -38,6 +40,7 @@ class SimpleMixtureNotify is TCPConnectionNotify
 			data: Array[U8] iso,
 			times: USize
 			): Bool =>
+		@printf[None]("Received data; size: %d, state: %s\n".cstring(), data.size(), _state.string().cstring())
 		match _state
 		| _Text =>
 			_reader.apply(consume data)
@@ -98,7 +101,8 @@ class Payload
 		data.push(seq)
 		_size = _size + seq.size()
 
-	fun complete(): Bool => true
+	fun complete(): Bool =>
+		_size > 10
 
 
 
