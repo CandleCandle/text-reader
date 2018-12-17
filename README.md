@@ -20,12 +20,12 @@ Developing
 API Objectives
 --------------
 
-# Reasonably usable, minimal surprises
-# check-then-read, i.e. call `has\_line()` before `line()`
+1. Reasonably usable, minimal surprises
+2. check-then-read, i.e. call `has\_line()` before `line()`
 
 Implementation Objectives
 -------------------------
 
-# No partial functions on the primary code-paths
-# Avoid memcopy and read iterations over the whole of the input
+1. No partial functions on the primary code-paths
+2. Avoid memcopy and read iterations over the whole of the input
 
