@@ -1,34 +1,11 @@
 use "ponytest"
 use "../text-reader"
 
-actor _ArraySearchTests is TestList
-	new create(env: Env) =>
-		PonyTest(env, this)
+primitive _TestArraySearch is TestWrapped
+	fun all_tests(): Array[UnitTest iso] =>
+		[as UnitTest iso:
 
-	new make() =>
-		None
-
-	fun tag tests(test: PonyTest) =>
-		test(_TestOne)
-		test(_TestTwo)
-		test(_TestThree)
-		test(_TestFour)
-		test(_TestFive)
-		test(_TestSix)
-		test(_TestSeven)
-		test(_TestEight)
-		test(_TestNine)
-		test(_TestTen)
-		test(_TestFoundTrailingPrefix1)
-		test(_TestFoundTrailingPrefix2)
-		test(_TestFoundTrailingComplete)
-		test(_TestNotFoundTrailing)
-		test(_TestFoundSuffix1)
-		test(_TestFoundSuffix2)
-		test(_TestFoundCompleteSuffix)
-		test(_TestNotFoundSuffix)
-
-class iso _TestOne is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/basic"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -36,8 +13,9 @@ class iso _TestOne is UnitTest
 				"arch".array()
 			)
 		h.assert_eq[USize](2, result)
+end
 
-class iso _TestSeven is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/prefix-first"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -45,8 +23,9 @@ class iso _TestSeven is UnitTest
 				"here".array()
 			)
 		h.assert_eq[USize](14, result)
+end
 
-class iso _TestTwo is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/repeated"
 	fun apply(h: TestHelper) =>
 		let result1 = ArraySearch.index_of(
@@ -60,8 +39,9 @@ class iso _TestTwo is UnitTest
 				where haystack_offset = 2
 			)
 		h.assert_eq[USize](11, result2)
+end
 
-class iso _TestThree is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/first"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -69,8 +49,9 @@ class iso _TestThree is UnitTest
 				"sea".array()
 			)
 		h.assert_eq[USize](0, result)
+end
 
-class iso _TestFour is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/not-found"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -78,8 +59,9 @@ class iso _TestFour is UnitTest
 				"z".array()
 			)
 		h.assert_true(13 < result)
+end
 
-class iso _TestFive is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/not-found/prefix"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -87,8 +69,9 @@ class iso _TestFive is UnitTest
 				"heretic".array()
 			)
 		h.assert_true(13 < result)
+end
 
-class iso _TestSix is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/index/not-found/suffix"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.index_of(
@@ -97,8 +80,9 @@ class iso _TestSix is UnitTest
 				where needle_offset = 4
 			)
 		h.assert_eq[USize](0, result)
+end
 
-class iso _TestEight is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/indexes/single"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.indexes_of(
@@ -106,8 +90,9 @@ class iso _TestEight is UnitTest
 				"a".array()
 			)
 		h.assert_array_eq[USize]([as USize: 2], result)
+end
 
-class iso _TestNine is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/indexes/multiple"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.indexes_of(
@@ -115,8 +100,9 @@ class iso _TestNine is UnitTest
 				"e".array()
 			)
 		h.assert_array_eq[USize]([as USize: 1; 11; 13], result)
+end
 
-class iso _TestTen is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/indexes/long"
 	fun apply(h: TestHelper) =>
 		let result = ArraySearch.indexes_of(
@@ -124,8 +110,9 @@ class iso _TestTen is UnitTest
 				"ea".array()
 			)
 		h.assert_array_eq[USize]([as USize: 1], result)
+end
 
-class iso _TestFoundTrailingPrefix1 is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/1"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.trailing_prefix(
@@ -134,8 +121,9 @@ class iso _TestFoundTrailingPrefix1 is UnitTest
 				)
 		h.assert_eq[USize](12, location)
 		h.assert_eq[USize](2, length)
+end
 
-class iso _TestFoundTrailingPrefix2 is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/2"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.trailing_prefix(
@@ -144,8 +132,9 @@ class iso _TestFoundTrailingPrefix2 is UnitTest
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](1, length)
+end
 
-class iso _TestFoundTrailingComplete is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/trailing/prefix/found/complete-match"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.trailing_prefix(
@@ -154,8 +143,9 @@ class iso _TestFoundTrailingComplete is UnitTest
 				)
 		h.assert_eq[USize](10, location)
 		h.assert_eq[USize](4, length)
+end
 
-class iso _TestNotFoundTrailing is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/trailing/prefix/not-found"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.trailing_prefix(
@@ -164,8 +154,9 @@ class iso _TestNotFoundTrailing is UnitTest
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](0, length)
+end
 
-class iso _TestFoundSuffix1 is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/leading/suffix/partial-found/1"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.leading_suffix(
@@ -174,8 +165,9 @@ class iso _TestFoundSuffix1 is UnitTest
 				)
 		h.assert_eq[USize](3, location)
 		h.assert_eq[USize](2, length)
+end
 
-class iso _TestFoundSuffix2 is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/leading/suffix/partial-found/2"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.leading_suffix(
@@ -184,8 +176,9 @@ class iso _TestFoundSuffix2 is UnitTest
 				)
 		h.assert_eq[USize](1, location)
 		h.assert_eq[USize](1, length)
+end
 
-class iso _TestFoundCompleteSuffix is UnitTest
+object iso is UnitTest
 	fun name():String => "array-search/leading/suffix/complete-found"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.leading_suffix(
@@ -194,8 +187,20 @@ class iso _TestFoundCompleteSuffix is UnitTest
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](3, length)
+end
 
-class iso _TestNotFoundSuffix is UnitTest
+object iso is UnitTest
+	fun name():String => "array-search/leading/suffix/complete-found"
+	fun apply(h: TestHelper) =>
+		(let location, let length) = ArraySearch.leading_suffix(
+				"search in here".array(),
+				"sea".array()
+				)
+		h.assert_eq[USize](0, location)
+		h.assert_eq[USize](3, length)
+end
+
+object iso is UnitTest
 	fun name():String => "array-search/leading/suffix/not-found"
 	fun apply(h: TestHelper) =>
 		(let location, let length) = ArraySearch.leading_suffix(
@@ -204,5 +209,7 @@ class iso _TestNotFoundSuffix is UnitTest
 				)
 		h.assert_eq[USize](0, location)
 		h.assert_eq[USize](0, length)
+end
+]
 
-
+// vi: sw=4 sts=4 ts=4 noet
